@@ -8,5 +8,6 @@ import lombok.Data;
 public class BoothDetailsDto {
         private String boothNumber;
         private String boothName;
+        private String boothAddress;
 
     }
