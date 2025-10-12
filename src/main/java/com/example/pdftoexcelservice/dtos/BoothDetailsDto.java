@@ -9,5 +9,5 @@ public class BoothDetailsDto {
         private String boothNumber;
         private String boothName;
         private String boothAddress;
-
+private String partNumber;
     }
