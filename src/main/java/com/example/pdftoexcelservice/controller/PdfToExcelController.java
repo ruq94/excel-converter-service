@@ -1,19 +1,20 @@
 package com.example.pdftoexcelservice.controller;
 
-import com.example.pdftoexcelservice.dtos.AllExcelDetailsDto;
+import com.example.pdftoexcelservice.dtos.BatchProcessingResult;
+import com.example.pdftoexcelservice.service.BatchProcessingService;
 import com.example.pdftoexcelservice.service.PdfOcrService;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import static javax.security.auth.callback.ConfirmationCallback.OK;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 @RestController
@@ -23,16 +24,18 @@ import static javax.security.auth.callback.ConfirmationCallback.OK;
 
 public class PdfToExcelController {
     private final PdfOcrService pdfOcrService;
+    BatchProcessingService batchProcessingService;
 
-    @PostMapping(path = "/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Mono<ResponseEntity<?>> extractToText(@RequestPart("file") Mono<FilePart> filePartMono) {
-        return filePartMono.flatMap(filePart -> {
+  /*  @PostMapping(path = "/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+
+ public Mono<ResponseEntity<?>> extractToText(@RequestPart("file") Mono<FilePart> filePartMono) {
+       return filePartMono.flatMap(filePart -> {
             if (filePart == null) {
                 log.info("No file uploaded or file is empty");
                 return Mono.just(ResponseEntity.badRequest().body("File is required and cannot be empty"));
             }
             try {
-                return pdfOcrService.extractData(filePart)
+                return pdfOcrService.extractDataFromFile(filePart)
                         .map(result -> {
                             log.info("File processed successfully: {}", filePart.filename());
                             return ResponseEntity.ok(result);
@@ -43,45 +46,31 @@ public class PdfToExcelController {
                         .status(500)
                         .body("Error extracting text: " + e.getMessage()));
             }
-        });
-    }
-    private boolean isPdfFile(MultipartFile file) {
-        String contentType = file.getContentType();
-        String filename = file.getOriginalFilename();
-        return (contentType != null && contentType.equals("application/pdf")) ||
-                (filename != null && filename.toLowerCase().endsWith(".pdf"));
-    }
+        });}
+ */
+    @PostMapping("/processFolder")
+    public ResponseEntity processFolder(
+            @RequestParam("folderName") String folderName) {
+         String pdfBaseDir = "C:/voterData/";  // hardcoded or via @Value
 
-    private String generateExcelFilename(String originalFilename) {
-        if (originalFilename != null && originalFilename.toLowerCase().endsWith(".pdf")) {
-            return originalFilename.substring(0, originalFilename.length() - 4) + "_extracted.xlsx";
-        }
-        return "extracted_data.xlsx";
-    }
+        // And an output base directory
+       String outputBaseDir = "C:/voterData/";
 
-    @PostMapping("/extractt")
-    public ResponseEntity<?> extractToExcel(
-            @Parameter(description = "PDF file to extract", required = true)
-            @RequestParam("file")
-            String file) {
+                    // sanitize folderName, avoid path traversal
+                    if (folderName.contains("..") || folderName.contains("/") || folderName.contains("\\")) {
+                        return ResponseEntity.badRequest().body(null);
+                    }
 
-        try {
+                    Path folderPath = Paths.get(pdfBaseDir, folderName).normalize();
+                    File folderFile = folderPath.toFile();
+                    if (!folderFile.exists() || !folderFile.isDirectory()) {
+                        return ResponseEntity.badRequest().body(null);
+                    }
 
-            if (file.isEmpty()) {
-                log.warn("Empty file received");
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body("File is empty");
+                    // Call the service method
+                    BatchProcessingResult result = batchProcessingService.processFolder(
+                            folderPath.toString(), outputBaseDir);
 
-            }
+                    return ResponseEntity.ok(result);
 
-
-        } catch (Exception e) {
-            log.error("Error processing PDF: {}", e.getMessage(), e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(e.getMessage());
-        }
-
-return new ResponseEntity<>(ResponseEntity.ok().body(file), HttpStatus.OK);
-}}
+    }}

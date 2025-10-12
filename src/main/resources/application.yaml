@@ -9,17 +9,14 @@ spring:
   application:
     name: ExcelConvertorApplication
   data:
-    mongodb:
-      uri: mongodb://localhost:27017/voters
-      #uri: mongodb+srv://admin:August%401599X@poll.p9umhu1.mongodb.net/voters?retryWrites=true&w=majority&socketTimeoutMS=1000000&connectTimeoutMS=100000&appName=Poll
-      pool:
+  pool:
         max-size: 50
         min-size: 5
   webflux:
     session:
       timeout: 6000s  # 10 minutes, adjust as needed
 server:
-  port: 8082
+  port: 8081
   reactive:
     session:
       timeout: 6000s  # 10 minutes, adjust as needed
@@ -39,8 +36,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 tesseract:
-  datapath:  ${TESS_PATH:C:\Program Files\tess_5\tesseract\tessdata}
-  lang-hin:  ${LANG:hin}
+  datapath:  ${TESS_PATH:C:/Program Files/tess_5/tesseract/tessdata}
+  lang-hin:  ${LANG:hin+eng}
+
 
 pdf:
+  directory: C:/voterData/
+  output-directory: /path/to/output/excel/files
   dpi: 300
+  batch-size: 5  # Process 5 files at a time
+  thread-pool-size: 10  # Number of parallel threads
