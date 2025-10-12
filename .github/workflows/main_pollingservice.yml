@@ -1,0 +1,39 @@
+name: Build and deploy JAR app to Azure Web App - PollingService
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java version
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: Build with Gradle (bootJar)
+        run: ./gradlew clean bootJar
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_BD3430D437C84ED89C843C0C793D7DC1 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_06AE3421F5C84520829764CBB1323D52 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1DBAC3A9119249C99E7E656989720EDD }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'PollingService'
+          slot-name: 'Production'
+          package: build/libs/app.jar

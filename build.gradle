@@ -1,0 +1,85 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+description = 'TransliterateService'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring, Mongo, etc.
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    implementation 'org.mongodb:mongodb-driver-reactivestreams:4.11.1'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+    implementation 'ch.qos.logback:logback-core:1.4.14'
+    implementation 'net.sourceforge.tess4j:tess4j:5.9.0' //tessarct
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+
+
+
+
+    // Apache POI — use the “full” schema bundle
+    implementation 'org.apache.poi:poi:5.4.1'
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
+    implementation 'org.apache.poi:poi-ooxml-full:5.4.1'
+
+    // MapStruct, Jackson
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    // Add Java Time module so LocalDateTime is recognized by Jackson and OpenAPI
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+
+    // Tests
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation "de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.12.2"
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+compileJava {
+    options.annotationProcessorPath = configurations.annotationProcessor
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = "app.jar"
+}
+
+
+jar {
+    enabled = false
+}
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['--add-modules', 'java.xml']
+}

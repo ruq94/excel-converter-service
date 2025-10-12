@@ -1,0 +1,44 @@
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <property name="LOG_HOME" value="${LOG_HOME:-./logs}"/>
+    <property name="APP_NAME" value="PollSearchService"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/${APP_NAME}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- daily rollover and max size per file -->
+            <fileNamePattern>${LOG_HOME}/${APP_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Async appender to decouple logging I/O from application threads -->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROLLING"/>
+        <queueSize>5000</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+    </appender>
+
+    <logger name="org.springframework" level="INFO"/>
+    <!-- Reduce application noise: use INFO by default. Set to DEBUG when debugging specific issues. -->
+    <logger name="com.example.transliterateservice" level="INFO"/>
+    <!-- Silence very noisy per-batch logs from the ExcelToJsonService (DB-WORKER / ENQUEUE) -->
+    <logger name="com.example.transliterateservice.service.ExcelToJsonService" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="ASYNC"/>
+    </root>
+</configuration>

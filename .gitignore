@@ -1,0 +1,21 @@
+# --- Gradle ---
+.gradle/
+build/
+
+# --- IntelliJ / IDEA ---
+.idea/
+out/
+*.iml
+
+# --- Eclipse ---
+.project
+.classpath
+.settings/
+bin/
+
+# --- Logs ---
+*.log
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
