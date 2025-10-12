@@ -4,12 +4,14 @@ spring:
   servlet:
     multipart:
       enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
   application:
     name: ExcelConvertorApplication
   data:
     mongodb:
-      #uri: mongodb://localhost:27017/voters
-      uri: mongodb+srv://admin:August%401599X@poll.p9umhu1.mongodb.net/voters?retryWrites=true&w=majority&socketTimeoutMS=1000000&connectTimeoutMS=100000&appName=Poll
+      uri: mongodb://localhost:27017/voters
+      #uri: mongodb+srv://admin:August%401599X@poll.p9umhu1.mongodb.net/voters?retryWrites=true&w=majority&socketTimeoutMS=1000000&connectTimeoutMS=100000&appName=Poll
       pool:
         max-size: 50
         min-size: 5
@@ -17,7 +19,7 @@ spring:
     session:
       timeout: 6000s  # 10 minutes, adjust as needed
 server:
-  port: 8081
+  port: 8082
   reactive:
     session:
       timeout: 6000s  # 10 minutes, adjust as needed

@@ -81,5 +81,5 @@ jar {
     enabled = false
 }
 tasks.withType(JavaCompile) {
-    options.compilerArgs += ['--add-modules', 'java.xml']
+    options.compilerArgs += ['--add-modules', 'java.xml,java.desktop']
 }

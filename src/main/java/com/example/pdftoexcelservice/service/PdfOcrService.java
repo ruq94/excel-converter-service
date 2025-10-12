@@ -14,8 +14,12 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -49,6 +53,52 @@ public class PdfOcrService {
             tesseract.setDatapath(tessPath);
         }
         tesseract.setLanguage(lang);
+    }
+
+    public Mono<AllExcelDetailsDto> extractData(FilePart filePart) {
+        log.info("Starting extraction for file: {}", filePart.filename());
+
+        return DataBufferUtils.join(filePart.content())
+                .flatMap(dataBuffer -> Mono.fromCallable(() -> {
+                    try (InputStream inputStream = dataBuffer.asInputStream(true); // true releases the buffer
+                         PDDocument document = PDDocument.load(inputStream)) {
+
+                        AllExcelDetailsDto.AllExcelDetailsDtoBuilder dtoBuilder = AllExcelDetailsDto.builder().voterDetailsDtoList(new ArrayList<>());
+
+                        int dpi = Integer.parseInt(Objects.requireNonNull(environment.getProperty("pdf.dpi")));
+                        PDFRenderer renderer = new PDFRenderer(document);
+                        int totalPages = document.getNumberOfPages();
+                        dtoBuilder.totalPage(totalPages);
+                        log.info("Total pages in PDF: {}", totalPages);
+
+                        if (totalPages >= 1) {
+                            BufferedImage page1Image = renderer.renderImageWithDPI(0, dpi, ImageType.RGB);
+                            String page1Text = doOcr(page1Image);
+                            // BoothDetailsDto boothInfo = extractBoothInfo(page1Text);
+                            // dtoBuilder.boothDetailsDto(boothInfo);
+                            // log.info("Booth Info extracted - Number: {}, Name: {}",
+                            // boothInfo.getBoothNumber(), boothInfo.getBoothName());
+                        }
+
+                        log.info("Skipping page 2");
+
+                        List<VoterDetailsDto> allRows = new ArrayList<>();
+                        for (int page = 2; page < totalPages; page++) {
+                            log.info("Processing page {} for table", page + 1);
+                            BufferedImage pageImage = renderer.renderImageWithDPI(page, dpi, ImageType.RGB);
+                            String pageText = doOcr(pageImage);
+                            List<VoterDetailsDto> rows = extractTableData(pageText, page + 1);
+                            allRows.addAll(rows);
+                            log.info("Page {}: {} records extracted", page + 1, rows.size());
+                        }
+
+                        dtoBuilder.voterDetailsDtoList(allRows);
+                        return dtoBuilder.build();
+                    } catch (Exception e) {
+                        log.error("Error during PDF extraction: {}", e.getMessage(), e);
+                        throw new RuntimeException("Failed to extract data from PDF", e);
+                    }
+                }).subscribeOn(Schedulers.boundedElastic()));
     }
 
     public AllExcelDetailsDto extractData(MultipartFile file) {

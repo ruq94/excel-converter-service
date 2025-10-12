@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 import static javax.security.auth.callback.ConfirmationCallback.OK;
 
@@ -23,21 +25,25 @@ public class PdfToExcelController {
     private final PdfOcrService pdfOcrService;
 
     @PostMapping(path = "/extract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> extractToText(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file == null || file.isEmpty()) {
-                return ResponseEntity.badRequest().body("File is required and cannot be empty");
+    public Mono<ResponseEntity<?>> extractToText(@RequestPart("file") Mono<FilePart> filePartMono) {
+        return filePartMono.flatMap(filePart -> {
+            if (filePart == null) {
+                log.info("No file uploaded or file is empty");
+                return Mono.just(ResponseEntity.badRequest().body("File is required and cannot be empty"));
             }
-
-            AllExcelDetailsDto result= pdfOcrService.extractData(file);
-            return ResponseEntity.ok(OK);
-
-        } catch (Exception e) {
-            log.error("Error extracting text from PDF", e);
-            return ResponseEntity
-                    .status(500)
-                    .body("Error extracting text: " + e.getMessage());
-        }
+            try {
+                return pdfOcrService.extractData(filePart)
+                        .map(result -> {
+                            log.info("File processed successfully: {}", filePart.filename());
+                            return ResponseEntity.ok(result);
+                        });
+            } catch (Exception e) {
+                log.error("Error extracting text from PDF", e);
+                return Mono.just(ResponseEntity
+                        .status(500)
+                        .body("Error extracting text: " + e.getMessage()));
+            }
+        });
     }
     private boolean isPdfFile(MultipartFile file) {
         String contentType = file.getContentType();
