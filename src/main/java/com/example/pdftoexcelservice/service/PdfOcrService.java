@@ -6,22 +6,13 @@ import com.example.pdftoexcelservice.dtos.VoterDetailsDto;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.tess4j.ITessAPI;
 import net.sourceforge.tess4j.Tesseract;
-import net.sourceforge.tess4j.TesseractException;
+
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 import org.springframework.core.env.Environment;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.codec.multipart.FilePart;
+
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -39,9 +30,12 @@ public class PdfOcrService {
 
     private final Tesseract tesseract;
     private final Environment environment;
+    private final ImageProcessorService imageProcessorService;
+
     public PdfOcrService(Environment environment) {
         this.environment = environment;
         this.tesseract = new Tesseract();
+        this.imageProcessorService = new ImageProcessorService();
     }
     /**
      * Extract data from File (for batch processing)
@@ -68,9 +62,9 @@ tesseract.setDatapath(data);
             List<VoterDetailsDto> allRows = new ArrayList<>();
 
             for (int pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-                // Skip page 2 if you don't need it
+                // Skip page 2 no data needs to  extract
                 if (pageIndex == 1) {
-                    log.debug("Skipping page 2 (index 1)");
+                    log.debug("Skipping page ");
                     continue;
                 }
 
@@ -79,7 +73,6 @@ tesseract.setDatapath(data);
                     log.info("Invalid image on page {} of file {}", pageIndex + 1, file.getName());
                     continue;
                 }
-                tesseract.setPageSegMode(ITessAPI.TessPageSegMode.PSM_AUTO);  // or a safe mode
 
                 String pageText = "";
                 try {
@@ -91,7 +84,7 @@ tesseract.setDatapath(data);
 
                 if (pageIndex == 0) {
                     // First page: extract booth
-                    extractTableData(pageText, 1);
+                    extractBoothData(pageText);
                 } else {
                     // Pages voterdetails
                     List<VoterDetailsDto> rows = extractTableData(pageText, pageIndex + 1);
@@ -108,13 +101,13 @@ tesseract.setDatapath(data);
         }
 
         return dto;    }
-    private void extractBoothData(String text, int pageNumber) {
-        List<VoterDetailsDto> rows = new ArrayList<>();
+    //testing
+    private void extractBoothData(String text) {
+        List<BoothDetailsDto> rows = new ArrayList<>();
         String[] lines = text.split("\\r?\\n");
         boolean tableStarted = false;
         int recordCount = 0;
     }
-
         private List<VoterDetailsDto> extractTableData(String text, int pageNumber) {
         List<VoterDetailsDto> rows = new ArrayList<>();
         String[] lines = text.split("\\r?\\n");
