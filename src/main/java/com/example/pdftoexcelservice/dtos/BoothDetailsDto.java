@@ -1,15 +1,17 @@
 package com.example.pdftoexcelservice.dtos;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-@Builder
 @Data
+@Builder
 public class BoothDetailsDto {
-    private String state;
+   // private String state;
     private String constituency;
-        private String boothNumber;
-        private String boothName;
-        private String boothAddress;
-private String partNumber;
-    }
+    private String boothNumber;
+    private String boothName;
+    private String boothAddress;
+
+}
+

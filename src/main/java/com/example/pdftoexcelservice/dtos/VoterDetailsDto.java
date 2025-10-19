@@ -6,9 +6,12 @@ import lombok.Data;
 @Data
 @Builder
 public class VoterDetailsDto {
-    private int voterId;
+    private Integer pageNumber;
+    private Integer voterId;
+    private String voterIdCard;
     private String name;
     private String age;
-    private int pageNumber;
-
+    private String gender;
+    private String relationName;
+    private String houseNumber;
 }

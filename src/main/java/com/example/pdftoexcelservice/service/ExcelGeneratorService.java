@@ -1,5 +1,6 @@
 package com.example.pdftoexcelservice.service;
 import com.example.pdftoexcelservice.dtos.AllExcelDetailsDto;
+import com.example.pdftoexcelservice.dtos.BoothDetailsDto;
 import com.example.pdftoexcelservice.dtos.VoterDetailsDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -22,26 +23,45 @@ public class ExcelGeneratorService {
 
             // Header row
             Row headerRow = votersSheet.createRow(0);
-            createCell(headerRow, 0, "Page", headerStyle);
-            createCell(headerRow, 1, "Serial No", headerStyle);
-            createCell(headerRow, 2, "Name", headerStyle);
-            createCell(headerRow, 3, "Age", headerStyle);
+          //  createCell(headerRow, 0, "Page", headerStyle);
+            createCell(headerRow, 0, "constituency", headerStyle);
+            createCell(headerRow, 1, "BoothNumber", headerStyle);
+
+            createCell(headerRow, 2, "BoothName", headerStyle);
+            createCell(headerRow, 3, "BoothAddrress", headerStyle);
 
             // Data rows
             int rowNum = 1;
-            for (VoterDetailsDto voter : data.getVoterDetailsDtoList()) {
+            if(rowNum==1) {
+                BoothDetailsDto booth = data.getBoothDetailsDto();
                 Row row = votersSheet.createRow(rowNum++);
-                createCell(row, 0, voter.getPageNumber(), dataStyle);
-                createCell(row, 1, voter.getVoterId(), dataStyle);
-                createCell(row, 2, voter.getName(), dataStyle);
-                createCell(row, 3, voter.getAge(), dataStyle);
+                createCell(row, 0, booth.getConstituency(), dataStyle);
+                createCell(row, 1, booth.getBoothNumber(), dataStyle);
+                createCell(row, 2, booth.getBoothName(), dataStyle);
+                createCell(row, 3, booth.getBoothAddress(), dataStyle);
             }
+            else {
+                Row headerRowthree = votersSheet.createRow(2);
+                //  createCell(headerRowthree, 0, "Page", headerStyle);
+                createCell(headerRowthree, 0, "votername", headerStyle);
 
-            // Auto-size columns
-            for (int i = 0; i < 4; i++) {
-                votersSheet.autoSizeColumn(i);
+                createCell(headerRowthree, 1, "voterid", headerStyle);
+                createCell(headerRowthree, 2, "voterAGE", headerStyle);
+                createCell(headerRowthree, 3, "voteraddress", headerStyle);
+
+                for (VoterDetailsDto voter : data.getVoterDetailsDtoList()) {
+                    Row row = votersSheet.createRow(rowNum++);
+                    createCell(row, 0, voter.getHouseNumber(), dataStyle);
+                    createCell(row, 1, voter.getVoterId(), dataStyle);
+                    createCell(row, 2, voter.getName(), dataStyle);
+                    createCell(row, 3, voter.getAge(), dataStyle);
+                }
+
+                // Auto-size columns
+                for (int i = 0; i < 4; i++) {
+                    votersSheet.autoSizeColumn(i);
+                }
             }
-
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             workbook.write(bos);
             return bos.toByteArray();
